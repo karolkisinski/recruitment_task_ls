@@ -14,7 +14,8 @@ class TestWaitForDbCommand(SimpleTestCase):
 
     @patch("time.sleep")
     def test_wait_for_db_not_ready(self, patched_time, patched_check):
-        patched_check.side_effect = [Psycopg2OperationalError, OperationalError, True]
+        patched_check.side_effect = [Psycopg2OperationalError,
+                                     OperationalError, True]
         call_command("wait_for_db")
         self.assertEqual(patched_check.call_count, 3)
         patched_check.assert_called_with(databases=["default"])
