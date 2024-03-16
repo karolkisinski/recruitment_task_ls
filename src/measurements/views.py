@@ -22,6 +22,7 @@ class HydroponicSystemMeasurementsListCreate(generics.ListCreateAPIView):
 
 class Last10MeasurementsList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = CombinedSerializer
 
     def get_queryset(self):
         system_id = self.kwargs.get('system_id')
