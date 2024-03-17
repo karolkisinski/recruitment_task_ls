@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from hydroponic_system.models import HydroponicSystem
 from measurements.models import Measurements
+from rest_framework.test import APITestCase
 
 
 class HydroponicSystemMeasurementsListCreateTestCase(TestCase):
@@ -69,3 +70,32 @@ class Last10MeasurementsListTestCase(TestCase):
         HydroponicSystem.objects.all().delete()
         Measurements.objects.all().delete()
         User.objects.all().delete()
+
+
+class AddMeasurementTest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.client.force_authenticate(user=self.user)
+        self.system = HydroponicSystem.objects.create(owner=self.user, system_name='Test System')
+
+    def test_add_measurement(self):
+        url = reverse('add_measurement', kwargs={'system_id': self.system.id})
+        data = {
+            "ph": 3.5,
+            "water_temperature": 30.0,
+            "tds": 3.5}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Measurements.objects.count(), 1)
+        measurement = Measurements.objects.first()
+        self.assertEqual(measurement.hydroponic_system, self.system)
+
+    def test_unauthorized_access(self):
+        self.client.logout()
+        url = reverse('add_measurement', kwargs={'system_id': self.system.id})
+        data = {
+            "ph": 3.5,
+            "water_temperature": 30.0,
+            "tds": 3.5}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
