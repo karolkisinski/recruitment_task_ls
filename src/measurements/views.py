@@ -3,11 +3,11 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import HydroponicSystem, Measurements
-from .serializers import CombinedSerializer, SystemMeasurementsSerializer
+from .serializers import CombinedSerializer, MeasurementsSerializer, SystemMeasurementsSerializer
 from rest_framework.exceptions import PermissionDenied, NotFound
 
 
-class HydroponicSystemMeasurementsListCreate(generics.ListCreateAPIView):
+class HydroponicSystemMeasurementsListCreate(generics.ListAPIView):
     queryset = HydroponicSystem.objects.all()
     serializer_class = SystemMeasurementsSerializer
     permission_classes = [IsAuthenticated,]
@@ -44,3 +44,15 @@ class Last10MeasurementsList(generics.ListAPIView):
             {'system': hydroponic_system,
              'measurements': queryset})
         return Response(serializer.data)
+
+
+class AddMeasurement(generics.CreateAPIView):
+    serializer_class = MeasurementsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        system_id = self.kwargs.get('system_id')
+        user = self.request.user
+        hydroponic_system = get_object_or_404(HydroponicSystem,
+                                              id=system_id, owner=user)
+        serializer.save(hydroponic_system=hydroponic_system)
